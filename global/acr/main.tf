@@ -1,7 +1,7 @@
 
-module "core_modules" {
-  source = "../../data-sources/"
-}
+# module "core_modules" {
+#   source = "../../data-sources/"
+# }
 
 terraform {
   backend "azurerm" {
@@ -14,7 +14,7 @@ terraform {
 
 resource "azurerm_container_registry" "containerreg" {
   name                     = "g1sooricontainerreg"
-  resource_group_name      = module.core_modules.core_rg_name
+  resource_group_name      = var.resource_grp
   location                 = var.location
   sku                      = "Basic"
 #  storage_account_id       = module.core_modules.storage_account_id
