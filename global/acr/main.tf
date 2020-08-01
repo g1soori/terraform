@@ -1,7 +1,7 @@
 
-# module "core_modules" {
-#   source = "../../data-sources/"
-# }
+module "core_modules" {
+  source = "../../data-sources/"
+}
 
 terraform {
   backend "azurerm" {
