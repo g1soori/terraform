@@ -8,7 +8,7 @@ terraform {
     resource_group_name   = "core"
     storage_account_name  = "corestorageaccforlab"
     container_name        = "terraform-state"
-    key                   = "terraform-acr.tfstate
+    key                   = "terraform-acr.tfstate"
   }
 }
 
