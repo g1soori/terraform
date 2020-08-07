@@ -13,7 +13,7 @@ terraform {
     resource_group_name   = "core"
     storage_account_name  = "corestorageaccforlab"
     container_name        = "terraform-dev-state"
-    key                   = "terraform-vm-generic.tfstate"
+    key                   = "terraform-vm-generic_github_priv.tfstate"
   }
 }
 
@@ -41,7 +41,7 @@ data "terraform_remote_state" "subnet" {
 
 
 module "vm_creation" {
-  source = "./module"
+  source = "git::https://github.com/g1soori/az_tf_vm_prv.git"
 
   server_count      = var.server_count
   subnet_id         = data.terraform_remote_state.subnet.outputs.subnet_id["${var.environment}"]
@@ -50,37 +50,3 @@ module "vm_creation" {
   admin_secret      = var.admin_secret
 
 }
-
-# # Null resource for run the ansible playbooks
-# resource "null_resource" "ansible" {
-#   count = var.server_count
-
-#   # Generate ansible dynamic inventory python script. 
-#   provisioner "local-exec" {
-#     command = "./generate_inv.sh $hostname $ip"
-#     environment = {
-#       hostname = "${element(azurerm_linux_virtual_machine.ansible.*.name, count.index)}"
-#       ip = "${element(azurerm_linux_virtual_machine.ansible.*.private_ip_address, count.index)}"
-#     }
-#   }
-  
-#   # Run the ansible playbook
-#   provisioner "local-exec" {
-#     command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i $file resolv_correction.yml"
-#     environment = {
-#       file = "/tmp/${element(azurerm_linux_virtual_machine.ansible.*.name, count.index)}.py"
-#     }
-#   }
-
-#   # Delete the temporarily script file created in above step
-#   provisioner "local-exec" {
-#     command = "rm -f $file"
-#     environment = {
-#       file = "/tmp/${element(azurerm_linux_virtual_machine.ansible.*.name, count.index)}.py"
-#     }
-#   }
-
-#   depends_on = [
-#     azurerm_linux_virtual_machine.ansible,
-#   ]
-# }

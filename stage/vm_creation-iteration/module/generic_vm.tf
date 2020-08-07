@@ -31,7 +31,7 @@ resource "azurerm_linux_virtual_machine" "ansible" {
   location            = var.location
   size                = "Standard_B2s"
   admin_username      = "adminuser"
-  admin_password      = "Password@2452"
+  admin_password      = var.admin_secret
   disable_password_authentication   = "false"
   network_interface_ids = [
     azurerm_network_interface.ansible[count.index].id,
@@ -44,8 +44,14 @@ resource "azurerm_linux_virtual_machine" "ansible" {
     name                 = "${var.resource_prefix}-vm${format("%02d",count.index + 1)}-disk"
   }
 
-  source_image_id = var.image_id
-
+  # source_image_id = var.image_id
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "16.04-LTS"
+    version   = "latest"
+  }
+  
   tags = {
       env = "dev"
       app = "ansible"

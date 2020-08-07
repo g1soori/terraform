@@ -4,7 +4,13 @@ provider "azurerm" {
     client_secret   = var.client_secret
     tenant_id       = var.tenant_id
     features {}
+    version         = "~>2.8"
 }
+
+terraform {
+  required_version = ">= 0.12"
+}
+
 
 variable "subscription_id" {
     description = "Enter subscription_id"
@@ -22,11 +28,6 @@ variable "tenant_id" {
     description = "Enter tenant_id"
 }
 
-# variable "resource_grp" {
-#   type              = string  
-#   description       = "rg"
-# }
-
 variable "location" {
   type              = string  
   description       = "location of rg"
@@ -35,4 +36,14 @@ variable "location" {
 variable "resource_prefix" {
   type        = string
   description = "prefix"
+}
+
+variable "vnet_info" {
+  type        = map
+  description = "prefix"
+}
+
+variable "subnet_info" {
+  type        = map
+  description = "subnet details"
 }

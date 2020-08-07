@@ -7,20 +7,36 @@ terraform {
   }
 }
 
-module data_src {
-  source = "../../data-sources/"
+data "terraform_remote_state" "rg" {
+  backend = "azurerm"
+  config = {
+    resource_group_name   = "core"
+    storage_account_name = "corestorageaccforlab"
+    container_name       = "terraform-state"
+    key                  = "terraform-core-rg.tfstate"
+  }
 }
 
 resource "azurerm_virtual_network" "core_infra" {
-  name                = "${var.resource_prefix}-vnet"
-  address_space       = ["10.0.0.0/16"]
-  location            = var.location
-  resource_group_name = module.data_src.core_rg_name
+  for_each  = var.vnet_info
+
+  name                = each.key
+  address_space       = [each.value]
+  location            = data.terraform_remote_state.rg.outputs.location
+  resource_group_name = data.terraform_remote_state.rg.outputs.rg_name
+
+  tags = {
+    env = "${element(split("_",each.key),0)}"
+    app = "network"
+    owner = "jeewan"
+  }
 }
 
 resource "azurerm_subnet" "core_infra" {
-  name                 = "${var.resource_prefix}-subnet"
-  resource_group_name  = module.data_src.core_rg_name
-  virtual_network_name = azurerm_virtual_network.core_infra.name
-  address_prefixes     = ["10.0.2.0/24"]
+  for_each = var.subnet_info
+
+  name                 = each.key
+  resource_group_name  = data.terraform_remote_state.rg.outputs.rg_name
+  virtual_network_name = azurerm_virtual_network.core_infra["${element(split("_",each.key),0)}_vnet"].name
+  address_prefixes     = [each.value]
 }

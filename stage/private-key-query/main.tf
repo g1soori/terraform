@@ -21,6 +21,7 @@ data "azurerm_key_vault_secret" "test" {
   key_vault_id = data.azurerm_key_vault.test_build.id
 }
 
+
 resource "null_resource" "test" {
   # Set the executable permission for scripts
   provisioner "local-exec" {
