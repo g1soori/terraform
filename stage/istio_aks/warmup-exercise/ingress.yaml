@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    ssl-redirect: "false"
+    # nginx.ingress.kubernetes.io/configuration-snippet: |
+    #   rewrite ^(/istio)$ $1/ redirect;
+    # nginx.ingress.kubernetes.io/configuration-snippet: |
+    #   add_header Cache-Control "max-age=0, no-cache, no-store, must-revalidate";
+
+spec:
+  rules:
+  - http:
+      paths:
+      # - path: /istio(/|$)(.*)
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: fleetman-webapp
+            port:
+              number: 80
