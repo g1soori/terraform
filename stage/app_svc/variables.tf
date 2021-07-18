@@ -4,6 +4,7 @@ provider "azurerm" {
     client_secret   = var.client_secret
     tenant_id       = var.tenant_id
     features {}
+    version         = "~> 2.21"
 }
 
 variable "subscription_id" {
@@ -56,7 +57,7 @@ variable "ssh_public_key" {
     default = "~/.ssh/id_rsa.pub"
 }
 
-variable "server_count" {
+variable "app_count" {
   type        = number
   description = "No of servers to be created"
 }
@@ -76,17 +77,10 @@ variable "admin_secret" {
   description = "No of servers to be created"
 }
 
-# variable "subnet_id" {
-#   type        = number
-#   description = "No of servers to be created"
-# }
+variable token {
+  type        = string
+}
 
-# variable "core_rg_name" {
-#   type        = string
-#   description = "No of servers to be created"
-# }
-
-# variable "image_id" {
-#   type        = string
-#   description = "No of servers to be created"
-# }
+variable cs {
+  type        = string
+}

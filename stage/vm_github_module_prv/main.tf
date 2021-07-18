@@ -41,7 +41,8 @@ data "terraform_remote_state" "subnet" {
 
 
 module "vm_creation" {
-  source = "git::https://github.com/g1soori/az_tf_vm_prv.git"
+  source = "git::https://github.com/g1soori/az_tf_vm_prv.git8u8j
+  "
 
   server_count      = var.server_count
   subnet_id         = data.terraform_remote_state.subnet.outputs.subnet_id["${var.environment}"]

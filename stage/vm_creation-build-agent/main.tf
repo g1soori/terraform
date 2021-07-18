@@ -1,11 +1,3 @@
-# Import main modules that contains resource group, network
-# module "rg" {
-#   source = "../../data-sources/rg/"
-# }
-
-# module "network" {
-#   source = "../../data-sources/network/"
-# }
 
 # Remote backend  configured in storage account
 terraform {
@@ -13,7 +5,7 @@ terraform {
     resource_group_name   = "core"
     storage_account_name  = "corestorageaccforlab"
     container_name        = "terraform-dev-state"
-    key                   = "terraform-vm1.tfstate"
+    key                   = "terraform-agent.tfstate"
   }
   required_version = ">= 0.12"
 }
@@ -45,16 +37,15 @@ locals {
   }
 }
 
-# Create public IP
 resource "azurerm_public_ip" "ansible" {
-  name                = "${var.resource_prefix}-vm01-pubip"
-  resource_group_name = data.terraform_remote_state.dev_rg.outputs.rg_name
-  location            = data.terraform_remote_state.dev_rg.outputs.location
-  allocation_method   = "Static"
+    name                         = "${var.resource_prefix}-pubip"
+    location                     = data.terraform_remote_state.dev_rg.outputs.location
+    resource_group_name          = data.terraform_remote_state.dev_rg.outputs.rg_name
+    allocation_method            = "Dynamic"
 
-  tags = {
-    environment = "Production"
-  }
+    tags = {
+        environment = "stage"
+    }
 }
 
 # Create virtual machines
@@ -93,7 +84,7 @@ resource "azurerm_linux_virtual_machine" "ansible" {
   name                = "${var.resource_prefix}-vm01"
   resource_group_name = data.terraform_remote_state.dev_rg.outputs.rg_name
   location            = data.terraform_remote_state.dev_rg.outputs.location
-  size                = "Standard_B2s"
+  size                = "Standard_DS2_v2"
   admin_username      = "adminuser"
   admin_password      = var.admin_secret
   disable_password_authentication   = "false"
@@ -112,7 +103,7 @@ resource "azurerm_linux_virtual_machine" "ansible" {
   source_image_reference {
     publisher = "Canonical"
     offer     = "UbuntuServer"
-    sku       = "16.04-LTS"
+    sku       = "18.04-LTS"
     version   = "latest"
   }
   
@@ -121,6 +112,18 @@ resource "azurerm_linux_virtual_machine" "ansible" {
       app = "ansible"
       owner = "jeewan"
     }
+  
+  # provisioner "file" {
+  #       connection {
+  #           type     = "ssh"
+  #           host     = azurerm_linux_virtual_machine.cc.public_ip_address
+  #           user     = "adminuser"
+  #           password = "Jeewan@Cloudcover123"
+  #       }
+
+  #       source      = "index.html"
+  #       destination = "/tmp/index.html"
+  #   }
 
   provisioner "remote-exec" {
       connection {
@@ -132,43 +135,18 @@ resource "azurerm_linux_virtual_machine" "ansible" {
 
       inline = [
         "sudo apt-get update",
-        "sudo apt-get install openjdk-8-jdk -y",
-        "curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash"
-
+        "curl https://raw.githubusercontent.com/MicrosoftDocs/mslearn-azure-pipelines-build-agent/master/build-tools.sh > build-tools.sh",
+        "sed -i 's/apt-get install -y nodejs npm jq/apt-get install -y nodejs jq/g' build-tools.sh",
+        "chmod u+x build-tools.sh",
+        "sudo ./build-tools.sh",
+        "curl https://raw.githubusercontent.com/MicrosoftDocs/mslearn-azure-pipelines-build-agent/master/build-agent.sh > build-agent.sh",
+        "export AZP_AGENT_NAME=agent-vm01",
+        "export AZP_URL=https://dev.azure.com/TaispinPractice",
+        export AZP_TOKEN=var.tocken,
+        "export AZP_POOL=MyAgentPool",
+        "export AZP_AGENT_VERSION=$(curl -s https://api.github.com/repos/microsoft/azure-pipelines-agent/releases | jq -r '.[0].tag_name' | cut -d 'v' -f 2)",
+        "chmod u+x build-agent.sh",
+        "sudo -E ./build-agent.sh"
       ]
   }
 }
-
-# # Null resource for run the ansible playbooks
-# resource "null_resource" "ansible" {
-#   count = var.server_count
-
-#   # Generate ansible dynamic inventory python script. 
-#   provisioner "local-exec" {
-#     command = "./generate_inv.sh $hostname $ip"
-#     environment = {
-#       hostname = "${element(azurerm_linux_virtual_machine.ansible.*.name, count.index)}"
-#       ip = "${element(azurerm_linux_virtual_machine.ansible.*.private_ip_address, count.index)}"
-#     }
-#   }
-  
-#   # Run the ansible playbook
-#   provisioner "local-exec" {
-#     command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i $file resolv_correction.yml"
-#     environment = {
-#       file = "/tmp/${element(azurerm_linux_virtual_machine.ansible.*.name, count.index)}.py"
-#     }
-#   }
-
-#   # Delete the temporarily script file created in above step
-#   provisioner "local-exec" {
-#     command = "rm -f $file"
-#     environment = {
-#       file = "/tmp/${element(azurerm_linux_virtual_machine.ansible.*.name, count.index)}.py"
-#     }
-#   }
-
-#   depends_on = [
-#     azurerm_linux_virtual_machine.ansible,
-#   ]
-# }
